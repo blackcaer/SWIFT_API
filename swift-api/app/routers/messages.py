@@ -5,6 +5,7 @@ from app.database import SessionDep
 
 router = APIRouter(prefix="/messages")
 
+
 @router.post("/")
 def create_message(content: str, db: SessionDep):
     message = Message(content=content)
@@ -12,6 +13,7 @@ def create_message(content: str, db: SessionDep):
     db.commit()
     db.refresh(message)
     return message
+
 
 @router.get("/")
 def read_messages(db: SessionDep):

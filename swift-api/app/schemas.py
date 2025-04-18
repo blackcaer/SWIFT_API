@@ -1,12 +1,14 @@
 from pydantic import BaseModel, field_validator
 from typing import List
 
-class SwiftCodeBase(BaseModel): 
+
+class SwiftCodeBase(BaseModel):
     address: str
     bankName: str
     countryISO2: str
     isHeadquarter: bool
     swiftCode: str
+
 
 class SwiftCodeCreate(BaseModel):
     swiftCode: str
@@ -23,12 +25,15 @@ class SwiftCodeCreate(BaseModel):
             raise ValueError("SWIFT code must be 8 or 11 chars")
         return v.upper()
 
+
 class HeadquarterSwiftCodeResponse(SwiftCodeBase):
     countryName: str
     branches: List[SwiftCodeBase]
 
+
 class BranchSwiftCodeResponse(SwiftCodeBase):
     countryName: str
+
 
 class CountrySwiftCodesResponse(BaseModel):
     countryISO2: str
