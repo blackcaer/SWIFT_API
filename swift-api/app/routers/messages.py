@@ -1,23 +1,19 @@
-from fastapi import APIRouter
-from sqlmodel import Session, select
+from fastapi import APIRouter, HTTPException
+from sqlmodel import select, Session
 from app.models import Message
-from app.database import engine
+from app.database import SessionDep
 
-router = APIRouter()
+router = APIRouter(prefix="/messages")
 
-
-@router.post("/messages/")
-def create_message(content: str):
+@router.post("/")
+def create_message(content: str, db: SessionDep):
     message = Message(content=content)
-    with Session(engine) as session:
-        session.add(message)
-        session.commit()
-        session.refresh(message)
+    db.add(message)
+    db.commit()
+    db.refresh(message)
     return message
 
-
-@router.get("/messages/")
-def read_messages():
-    with Session(engine) as session:
-        messages = session.exec(select(Message)).all()
+@router.get("/")
+def read_messages(db: SessionDep):
+    messages = db.exec(select(Message)).all()
     return messages
