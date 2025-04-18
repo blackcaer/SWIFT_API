@@ -6,6 +6,7 @@ from app.schemas import (
     HeadquarterSwiftCodeResponse,
     BranchSwiftCodeResponse,
     CountrySwiftCodesResponse,
+    SwiftCodeBase,
 )
 from app.database import SessionDep
 from app.validators import validate_swift_code
@@ -35,10 +36,14 @@ async def get_swift_code(swiftCode: str, db: SessionDep):
                 SwiftCode.swiftCode.startswith(swiftCode[:8]),
                 SwiftCode.swiftCode != swiftCode,
             )
-        ).all()  # Temporary query to get branches
+        ).all()  # Temporary query to get branches TODO
+
+        branches_converted = [
+            SwiftCodeBase.model_validate(branch.model_dump()) for branch in branches
+        ]
 
         return HeadquarterSwiftCodeResponse.model_validate(
-            {**db_code.model_dump(), "branches": branches}
+            {**db_code.model_dump(), "branches": branches_converted}
         )
 
     return BranchSwiftCodeResponse.model_validate(db_code)
