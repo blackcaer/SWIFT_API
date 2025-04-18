@@ -7,7 +7,7 @@ class Message(SQLModel, table=True):
     content: str
 
 
-class SwiftCodeBase(SQLModel):
+class SwiftCodeModelBase(SQLModel):
     swiftCode: str = Field(
         primary_key=True, max_length=11, description="SWIFT code (8 or 11 chars)"
     )
@@ -21,13 +21,13 @@ class SwiftCodeBase(SQLModel):
     isHeadquarter: bool = Field(default=False)
 
 
-class SwiftCode(SwiftCodeBase, table=True):
+class SwiftCode(SwiftCodeModelBase, table=True):
     pass
 
 
-class SwiftCodeRead(SwiftCodeBase):
+class SwiftCodeRead(SwiftCodeModelBase):
     pass
 
 
-class SwiftCodeCreate(SwiftCodeBase):
+class SwiftCodeCreate(SwiftCodeModelBase):
     pass
