@@ -14,9 +14,7 @@ class SwiftCodeModelBase(SQLModel):
 
     bankName: str = Field(max_length=100)
     address: str = Field(max_length=250)
-    countryISO2: str = Field(
-        max_length=2, index=True, description="ISO 2-letter country code"
-    )
+    countryISO2: str = Field(max_length=2, index=True, description="ISO 2-letter country code")
     countryName: str = Field(max_length=60)
     isHeadquarter: bool = Field(default=False)
 

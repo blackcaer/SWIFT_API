@@ -41,3 +41,6 @@ class CountrySwiftCodesResponse(BaseModel):
     countryISO2: str
     countryName: str
     swiftCodes: List[SwiftCodeBase]
+
+class SwiftCodeCreateResponse(BaseModel):
+    message: str

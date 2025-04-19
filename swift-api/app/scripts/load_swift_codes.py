@@ -56,19 +56,17 @@ def load_swift_data(file_path: Path):
                     )
                 )
             except Exception as e:
-                print(f"Error in row {idx + 2}: {str(e)}",file=sys.stderr)  # Excel rows are 1-indexed + header row
+                print(
+                    f"Error in row {idx + 2}: {str(e)}", file=sys.stderr
+                )  # Excel rows are 1-indexed + header row
                 continue
 
         with Session(engine) as session:
             session.add_all(records)
             session.commit()
-            print(
-                f"\nSuccessfully loaded {len(records)}/{len(df)} SWIFT codes into the database"
-            )
+            print(f"\nSuccessfully loaded {len(records)}/{len(df)} SWIFT codes into the database")
             if len(records) != len(df):
-                print(
-                    f"Skipped {len(df) - len(records)} invalid records", file=sys.stderr
-                )
+                print(f"Skipped {len(df) - len(records)} invalid records", file=sys.stderr)
 
     except FileNotFoundError:
         print(f"Error: File not found at {file_path}", file=sys.stderr)
@@ -79,9 +77,7 @@ def load_swift_data(file_path: Path):
 
 
 def main():
-    argparser = argparse.ArgumentParser(
-        description="Load SWIFT codes from Excel to database"
-    )
+    argparser = argparse.ArgumentParser(description="Load SWIFT codes from Excel to database")
     argparser.add_argument(
         "-f",
         "--file",
