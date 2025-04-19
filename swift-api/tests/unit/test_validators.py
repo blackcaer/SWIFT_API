@@ -1,6 +1,7 @@
 # tests/test_validators.py
+from ast import List
 import pytest
-from app.validators import validate_swift_code_format, SwiftCodeValidationError
+from app.validators import CountryISO2CodeValidationError, validate_countryISO2code_format, validate_swift_code_format, SwiftCodeValidationError
 
 class TestValidateSwiftCodeFormat:
     VALID_HQ_CODE = "AAISALTRXXX"
@@ -64,3 +65,45 @@ class TestValidateSwiftCodeFormat:
     def test_invalid_swift_code_length(self, code):
         with pytest.raises(SwiftCodeValidationError):
             validate_swift_code_format(code)
+
+class TestCountryISO2CodeFormat:
+    VALID_COUNTRY_ISO2_CODES = ["US", "PL", "AU"]
+    
+    @pytest.mark.parametrize(
+        "code", VALID_COUNTRY_ISO2_CODES
+    )
+    def test_valid_countryISO2code(self, code):
+        assert validate_countryISO2code_format(code) == code
+    
+    @pytest.mark.parametrize(
+        "code", VALID_COUNTRY_ISO2_CODES
+    )
+    def test_valid_lowercase_countryISO2code(self, code):
+        assert validate_countryISO2code_format(code.lower()) == code
+    
+    @pytest.mark.parametrize(
+        "code", VALID_COUNTRY_ISO2_CODES
+    )
+    def test_valid_whitespace_countryISO2code(self, code):
+        ws = " \n\t\r\f\v " * 2
+        assert validate_countryISO2code_format(ws+code+ws) == code
+
+    @pytest.mark.parametrize(
+    "code",
+    [
+        "U",  # Too short
+        "U ",  # Whitespace instead of character
+        " U",  # Whitespace instead of character
+        "USA",  # Too long
+        "1A",  # Contains numeric character
+        "A1",  # Contains numeric character
+        "U$",  # Contains special character
+        "P L",  # Space in the middle
+        "US1",  # Extra numeric character
+        "",  # Empty string
+        "  ",  # Only whitespace
+    ],
+    )
+    def test_invalid_countryISO2code(self, code):
+        with pytest.raises(CountryISO2CodeValidationError):
+            validate_countryISO2code_format(code)
