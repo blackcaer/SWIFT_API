@@ -9,7 +9,7 @@ VALID_BRANCH_CODE = "BCHICLR10R2"
 
 @pytest.mark.parametrize(
     "code",[VALID_HQ_CODE,VALID_SHORT_HQ_CODE,VALID_BRANCH_CODE]
-    )
+    )   
 def test_valid_swift_code(code):
     assert validate_swift_code_format(code) == code
 
