@@ -9,7 +9,7 @@ from app.schemas import (
     SwiftCodeBase,
 )
 from app.database import SessionDep
-from app.validators import validate_swift_code
+from app.validators import SwiftCodeValidationError, validate_swift_code_format
 
 router = APIRouter(prefix="/v1/swift-codes")
 
@@ -20,9 +20,9 @@ router = APIRouter(prefix="/v1/swift-codes")
 )
 async def get_swift_code(swiftCode: str, db: SessionDep):
     try:
-        swiftCode = validate_swift_code(swiftCode)
-    except HTTPException as e:
-        raise e
+        swiftCode = validate_swift_code_format(swiftCode)
+    except SwiftCodeValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

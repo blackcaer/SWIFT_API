@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator
 from typing import List
+from app.validators import SwiftCodeValidationError, validate_swift_code_format
 
 
 class SwiftCodeBase(BaseModel):
@@ -16,14 +17,15 @@ class SwiftCodeCreate(BaseModel):
     address: str
     countryISO2: str
     countryName: str
-    isHeadquarter: bool = False
+    isHeadquarter: bool
 
     @field_validator("swiftCode")
     @classmethod
     def validate_swiftCode(cls, v: str) -> str:
-        if len(v) not in (8, 11):
-            raise ValueError("SWIFT code must be 8 or 11 chars")
-        return v.upper()
+        try:
+            return validate_swift_code_format(v)
+        except SwiftCodeValidationError as e:
+            raise ValueError(str(e))
 
 
 class HeadquarterSwiftCodeResponse(SwiftCodeBase):
