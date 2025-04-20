@@ -162,3 +162,18 @@ class TestCountryResponseStructures:
     def test_error_response_structure(self, client: TestClient):
         response = client.get("/v1/swift-codes/country/INVALID")
         assert set(response.json().keys()) == {"detail"}
+
+
+def test_country_codes_uppercase_in_get_country_swift_codes(client: TestClient):
+    """Test that countryISO2 and countryName are returned as uppercase in GET /v1/swift-codes/country/{countryISO2code}"""
+    response = client.get("/v1/swift-codes/country/US")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["countryISO2"].isupper(), f"Expected uppercase, got {data['countryISO2']}"
+    assert data["countryName"].isupper(), f"Expected uppercase, got {data['countryName']}"
+
+    for swift_code in data["swiftCodes"]:
+        assert swift_code[
+            "countryISO2"
+        ].isupper(), f"Expected uppercase, got {swift_code['countryISO2']}"

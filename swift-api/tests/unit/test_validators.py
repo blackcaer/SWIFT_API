@@ -102,3 +102,20 @@ class TestCountryISO2CodeFormat:
     def test_invalid_countryISO2code(self, code):
         with pytest.raises(CountryISO2CodeValidationError):
             validate_countryISO2code_format(code)
+
+
+def test_country_codes_uppercase_in_validators():
+    """Test that countryISO2 and countryName are converted to uppercase by validators"""
+    from app.schemas import SwiftCodeCreate
+
+    payload = SwiftCodeCreate(
+        swiftCode="CITIPLPPXXX",
+        bankName="CITIBANK POLAND HQ",
+        address="UL. CENTRALNA 1, WARSAW",
+        countryISO2="pl",  # Lowercase input
+        countryName="poland",  # Lowercase input
+        isHeadquarter=True,
+    )
+
+    assert payload.countryISO2 == "PL", f"Expected 'PL', got {payload.countryISO2}"
+    assert payload.countryName == "POLAND", f"Expected 'POLAND', got {payload.countryName}"

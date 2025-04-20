@@ -97,3 +97,23 @@ class TestPostResponseStructures:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
         assert set(response.json().keys()) == {"detail"}
+
+
+def test_country_codes_uppercase_in_post_swift_code(client: TestClient, session):
+    """Test that countryISO2 and countryName are stored as uppercase in POST /v1/swift-codes"""
+    payload = {
+        "swiftCode": "CITIPLPPXXX",
+        "bankName": "CITIBANK POLAND HQ",
+        "address": "UL. CENTRALNA 1, WARSAW",
+        "countryISO2": "pl",  # Lowercase input
+        "countryName": "poland",  # Lowercase input
+        "isHeadquarter": True,
+    }
+
+    response = client.post("/v1/swift-codes/", json=payload)
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # Verify in database
+    swift_code = session.get(SwiftCode, "CITIPLPPXXX")
+    assert swift_code.countryISO2 == "PL", f"Expected 'PL', got {swift_code.countryISO2}"
+    assert swift_code.countryName == "POLAND", f"Expected 'POLAND', got {swift_code.countryName}"

@@ -134,6 +134,16 @@ def test_case_insensitivity(client: TestClient):
     assert response.json()["swiftCode"] == "CITIUS33MIA"  # Response should be normalized
 
 
+def test_country_codes_uppercase_in_get_swift_code(client: TestClient):
+    """Test that countryISO2 and countryName are returned as uppercase in GET /v1/swift-codes/{swiftCode}"""
+    response = client.get("/v1/swift-codes/CITIUS33XXX")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["countryISO2"].isupper(), f"Expected uppercase, got {data['countryISO2']}"
+    assert data["countryName"].isupper(), f"Expected uppercase, got {data['countryName']}"
+
+
 class TestGetSwiftCodeResponseStructures:
     """Response structure validation for single SWIFT code endpoint"""
 
