@@ -102,10 +102,10 @@ class TestGetSwiftCodeEndpoint:
     @pytest.mark.parametrize(
         "invalid_code,expected_error",
         [
-            ("INVALID", "SWIFT code must be 8 or 11 characters long"),
+            ("INVALID", "SWIFT code must be 11 characters long"),
             ("12345678XXX", "First 6 characters must be alphabetic"),
             ("CITI@S33XXX", "First 6 characters must be alphabetic"),
-            ("CITIUS3@XXX", "Characters 7-8 must be alphanumeric"),
+            ("CITIUS3@XXX", "Characters 7-11 must be alphanumeric"),
         ],
     )
     async def test_invalid_swift_code_format(self, mock_db, invalid_code, expected_error):
@@ -122,10 +122,9 @@ class TestGetSwiftCodeEndpoint:
         "valid_code",
         [
             "CITIUS33XXX",  # HQ
-            "CITIUS33",  # Short HQ
             "CITIUS33MIA",  # Branch
-            "ABCDEF12XXX",  # HQ z cyframi w pozycjach 7-8
-            "ABCDEF12123",  # Branch z cyframi
+            "ABCDEF12XXX",  # HQ with digits in positions 7-8
+            "ABCDEF12123",  # Branch with digits
         ],
     )
     async def test_valid_swift_code_format(self, mock_db, valid_code):
@@ -153,7 +152,8 @@ class TestGetSwiftCodeEndpoint:
         mock_db.get.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_swift_code("NONEXIST", mock_db)
+            await get_swift_code("NONEXISTABC", mock_db)
+
 
         assert exc_info.value.status_code == 404
         assert "not found" in str(exc_info.value.detail).lower()

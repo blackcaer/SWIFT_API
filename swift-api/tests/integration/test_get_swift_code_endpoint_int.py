@@ -101,7 +101,11 @@ def test_whitespace_handling(client: TestClient):
 
 def test_get_nonexistent_swift_code(client: TestClient):
     """Test non-existent swift code returns 404"""
-    response = client.get("/v1/swift-codes/NONEXIST")
+    response = client.get("/v1/swift-codes/NONEXISTABC")
+    assert response.status_code == 404
+    assert "not found" in response.json()["detail"].lower()
+    
+    response = client.get("/v1/swift-codes/NONEXISTXXX")
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
 
@@ -109,9 +113,9 @@ def test_get_nonexistent_swift_code(client: TestClient):
 @pytest.mark.parametrize(
     "invalid_code,expected_error",
     [
-        ("INVALID", "must be 8 or 11 characters"),
-        ("CITIUS3", "must be 8 or 11 characters"),  # Too short
-        ("CITIUS33XX", "must be 8 or 11 characters"),  # 10 chars invalid
+        ("INVALID", "must be 11 characters"),  # Updated error message
+        ("CITIUS3", "must be 11 characters"),  # Too short
+        ("CITIUS33XX", "must be 11 characters"),  # 10 chars invalid
         ("12345678XXX", "First 6 characters must be alphabetic"),
         ("CITI@S33XXX", "First 6 characters must be alphabetic"),
     ],
@@ -129,13 +133,14 @@ def test_case_insensitivity(client: TestClient):
     assert response.status_code == 200
     assert response.json()["swiftCode"] == "CITIUS33MIA"  # Response should be normalized
 
+
 class TestGetSwiftCodeResponseStructures:
     """Response structure validation for single SWIFT code endpoint"""
 
     def test_hq_response_structure(self, client: TestClient):
         response = client.get("/v1/swift-codes/CITIUS33XXX")
         data = response.json()
-        
+
         assert set(data.keys()) == {
             "address",
             "bankName",
@@ -143,29 +148,29 @@ class TestGetSwiftCodeResponseStructures:
             "countryName",
             "isHeadquarter",
             "swiftCode",
-            "branches"
+            "branches",
         }
-        
+
         assert isinstance(data["branches"], list)
         assert set(data["branches"][0].keys()) == {
             "address",
             "bankName",
             "countryISO2",
             "isHeadquarter",
-            "swiftCode"
+            "swiftCode",
         }
 
     def test_branch_response_structure(self, client: TestClient):
         response = client.get("/v1/swift-codes/CITIUS33MIA")
         data = response.json()
-        
+
         assert set(data.keys()) == {
             "address",
             "bankName",
             "countryISO2",
             "countryName",
             "isHeadquarter",
-            "swiftCode"
+            "swiftCode",
         }
         assert "branches" not in data
 

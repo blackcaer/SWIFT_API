@@ -18,7 +18,7 @@ class Message(SQLModel, table=True):
 
 class SwiftCodeModelBase(SQLModel):
     swiftCode: str = Field(
-        primary_key=True, max_length=11, description="SWIFT code (8 or 11 chars)"
+        primary_key=True, min_length=11, max_length=11, description="SWIFT code"
     )
 
     bankName: str = Field(max_length=100)
