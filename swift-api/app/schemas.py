@@ -2,11 +2,13 @@ from pydantic import BaseModel, field_validator, model_validator
 from typing import List
 from app.validators import (
     SwiftCodeValidationError,
+    validate_address,
     validate_swift_code_format,
     validate_countryISO2code_format,
     validate_bank_name,
     validate_country_name,
 )
+from app.logger import logger
 
 
 class SwiftCodeBase(BaseModel):
@@ -58,6 +60,18 @@ class SwiftCodeCreate(BaseModel):
         if self.isHeadquarter != self.swiftCode.endswith("XXX"):
             raise ValueError("isHeadquarter must match swiftCode suffix")
         return self
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def log_and_validate(cls, values, handler):
+        logger.info(f"Before SwiftCode validation: {values}")
+        try:
+            validated_values = handler(values)
+            logger.info(f"After SwiftCode validation: {validated_values}")
+            return validated_values
+        except Exception as e:
+            logger.error(f"SwiftCode validation error: {e}")
+            raise
 
 
 class HeadquarterSwiftCodeResponse(SwiftCodeBase):
