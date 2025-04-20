@@ -128,3 +128,47 @@ def test_case_insensitivity(client: TestClient):
     response = client.get("/v1/swift-codes/citius33mia")
     assert response.status_code == 200
     assert response.json()["swiftCode"] == "CITIUS33MIA"  # Response should be normalized
+
+class TestGetSwiftCodeResponseStructures:
+    """Response structure validation for single SWIFT code endpoint"""
+
+    def test_hq_response_structure(self, client: TestClient):
+        response = client.get("/v1/swift-codes/CITIUS33XXX")
+        data = response.json()
+        
+        assert set(data.keys()) == {
+            "address",
+            "bankName",
+            "countryISO2",
+            "countryName",
+            "isHeadquarter",
+            "swiftCode",
+            "branches"
+        }
+        
+        assert isinstance(data["branches"], list)
+        assert set(data["branches"][0].keys()) == {
+            "address",
+            "bankName",
+            "countryISO2",
+            "isHeadquarter",
+            "swiftCode"
+        }
+
+    def test_branch_response_structure(self, client: TestClient):
+        response = client.get("/v1/swift-codes/CITIUS33MIA")
+        data = response.json()
+        
+        assert set(data.keys()) == {
+            "address",
+            "bankName",
+            "countryISO2",
+            "countryName",
+            "isHeadquarter",
+            "swiftCode"
+        }
+        assert "branches" not in data
+
+    def test_error_response_structure(self, client: TestClient):
+        response = client.get("/v1/swift-codes/INVALID")
+        assert set(response.json().keys()) == {"detail"}

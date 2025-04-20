@@ -137,3 +137,27 @@ def test_response_structure(client: TestClient):
             field in code
             for field in ["swiftCode", "bankName", "address", "countryISO2", "isHeadquarter"]
         )
+
+class TestCountryResponseStructures:
+    """Response structure validation for country endpoint"""
+
+    def test_success_response_structure(self, client: TestClient):
+        response = client.get("/v1/swift-codes/country/US")
+        data = response.json()
+        
+        assert set(data.keys()) == {"countryISO2", "countryName", "swiftCodes"}
+        assert isinstance(data["swiftCodes"], list)
+        
+        for code in data["swiftCodes"]:
+            assert set(code.keys()) == {
+                "address",
+                "bankName",
+                "countryISO2",
+                "isHeadquarter",
+                "swiftCode"
+            }
+            assert "countryName" not in code
+
+    def test_error_response_structure(self, client: TestClient):
+        response = client.get("/v1/swift-codes/country/INVALID")
+        assert set(response.json().keys()) == {"detail"}
