@@ -93,22 +93,22 @@ async def get_country_swift_codes(countryISO2code: str, db: SessionDep):
 
 
 @router.post("/", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-async def create_swift_code(swift_code: SwiftCodeCreate, db: SessionDep):   
+async def create_swift_code(swiftCode: SwiftCodeCreate, db: SessionDep):   
     # Schema automatically validates the SWIFT code format
-    logger.info(f"Received request to create SWIFT code: {swift_code.swiftCode}")
+    logger.info(f"Received request to create SWIFT code: {swiftCode.swiftCode}")
 
-    if db.get(SwiftCode, swift_code.swiftCode):
-        logger.warning(f"SWIFT code {swift_code.swiftCode} already exists in the database")
+    if db.get(SwiftCode, swiftCode.swiftCode):
+        logger.warning(f"SWIFT code {swiftCode.swiftCode} already exists in the database")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="SWIFT code already exists"
         )
 
     # For branches, verify headquarters exists
-    if not swift_code.isHeadquarter:
-        hq_code = swift_code.swiftCode[:8] + "XXX"
+    if not swiftCode.isHeadquarter:
+        hq_code = swiftCode.swiftCode[:8] + "XXX"
         if not db.get(SwiftCode, hq_code):
             logger.error(
-                f"Headquarter SWIFT code {hq_code} not found for branch {swift_code.swiftCode}"
+                f"Headquarter SWIFT code {hq_code} not found for branch {swiftCode.swiftCode}"
             )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -116,18 +116,18 @@ async def create_swift_code(swift_code: SwiftCodeCreate, db: SessionDep):
             )
         else:
             logger.info(
-                f"Headquarter SWIFT code {hq_code} exists for branch {swift_code.swiftCode}"
+                f"Headquarter SWIFT code {hq_code} exists for branch {swiftCode.swiftCode}"
             )
 
     try:
-        logger.info(f"Creating new SWIFT code: {swift_code.swiftCode}")
-        db_swift = SwiftCode(**swift_code.model_dump())
+        logger.info(f"Creating new SWIFT code: {swiftCode.swiftCode}")
+        db_swift = SwiftCode(**swiftCode.model_dump())
         db.add(db_swift)
         db.commit()
-        logger.info(f"SWIFT code {swift_code.swiftCode} created successfully")
-        return MessageResponse(message=f"SWIFT code {swift_code.swiftCode} created successfully")
+        logger.info(f"SWIFT code {swiftCode.swiftCode} created successfully")
+        return MessageResponse(message=f"SWIFT code {swiftCode.swiftCode} created successfully")
     except Exception as e:
-        logger.exception(f"Failed to create SWIFT code {swift_code.swiftCode}: {e}")
+        logger.exception(f"Failed to create SWIFT code {swiftCode.swiftCode}: {e}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database operation failed"
