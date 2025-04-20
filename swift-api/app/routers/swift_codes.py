@@ -6,11 +6,20 @@ from app.schemas import (
     HeadquarterSwiftCodeResponse,
     BranchSwiftCodeResponse,
     CountrySwiftCodesResponse,
+    MessageResponse,
     SwiftCodeBase,
 )
 from app.database import SessionDep
-from app.validators import CountryISO2CodeValidationError, SwiftCodeValidationError, validate_countryISO2code_format, validate_swift_code_format
-from app.logger import logger  # Import logger
+from app.validators import (
+    CountryISO2CodeValidationError,
+    SwiftCodeValidationError,
+    validate_countryISO2code_format,
+    validate_swift_code_format,
+)
+from app.logger import logger
+from fastapi import status
+from app.schemas import SwiftCodeCreate, SwiftCodeCreateResponse
+from app.models import SwiftCode
 
 router = APIRouter(prefix="/v1/swift-codes")
 
@@ -71,23 +80,67 @@ async def get_country_swift_codes(countryISO2code: str, db: SessionDep):
         logger.exception(f"Unexpected error during countryISO2code alidation: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     logger.info(f"Country code: {countryISO2code} is valid")
-    
-    db_codes = db.exec(
-        select(SwiftCode).where(SwiftCode.countryISO2 == countryISO2code)
-    ).all()
-    
+
+    db_codes = db.exec(select(SwiftCode).where(SwiftCode.countryISO2 == countryISO2code)).all()
+
     country_codes_converted = [code.model_dump() for code in db_codes]
-    
+
     if not country_codes_converted:
         logger.warning(f"No SWIFT codes found for country code: {countryISO2code}")
         raise HTTPException(status_code=404, detail="No SWIFT codes found for this country code")
-    
+
     countryName = country_codes_converted[0]["countryName"]
 
-    logger.info(f"Found {len(country_codes_converted)} SWIFT codes for country code: {countryISO2code}")
-    
-    return CountrySwiftCodesResponse.model_validate(
-        {"countryISO2":countryISO2code,
-        "countryName":countryName,
-        "swiftCodes": country_codes_converted}
+    logger.info(
+        f"Found {len(country_codes_converted)} SWIFT codes for country code: {countryISO2code}"
     )
+
+    return CountrySwiftCodesResponse.model_validate(
+        {
+            "countryISO2": countryISO2code,
+            "countryName": countryName,
+            "swiftCodes": country_codes_converted,
+        }
+    )
+
+
+@router.post("/", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+async def create_swift_code(swift_code: SwiftCodeCreate, db: SessionDep):
+    logger.info(f"Received request to create SWIFT code: {swift_code.swiftCode}")
+    logger.info(f"Received request to create SWIFT code: {swift_code}")
+
+    if db.get(SwiftCode, swift_code.swiftCode):
+        logger.warning(f"SWIFT code {swift_code.swiftCode} already exists in the database")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="SWIFT code already exists"
+        )
+
+    # For branches, verify headquarters exists
+    if not swift_code.isHeadquarter:
+        hq_code = swift_code.swiftCode[:8] + "XXX"
+        if not db.get(SwiftCode, hq_code):
+            logger.error(
+                f"Headquarter SWIFT code {hq_code} not found for branch {swift_code.swiftCode}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Corresponding headquarter not found. Add headquarter first",
+            )
+        else:
+            logger.info(
+                f"Headquarter SWIFT code {hq_code} exists for branch {swift_code.swiftCode}"
+            )
+
+    try:
+        logger.info(f"Creating new SWIFT code: {swift_code.swiftCode}")
+        db_swift = SwiftCode(**swift_code.model_dump())
+        db.add(db_swift)
+        db.commit()
+        logger.info(f"SWIFT code {swift_code.swiftCode} created successfully")
+        return MessageResponse(message=f"SWIFT code {swift_code.swiftCode} created successfully")
+    except Exception as e:
+        logger.exception(f"Failed to create SWIFT code {swift_code.swiftCode}: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database operation failed"
+        )
