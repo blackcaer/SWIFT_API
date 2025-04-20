@@ -113,9 +113,9 @@ class TestGetSwiftCodeEndpoint:
         with pytest.raises(HTTPException) as exc_info:
             await get_swift_code(invalid_code, mock_db)
 
-        assert exc_info.value.status_code == 400
+        assert exc_info.value.status_code == 422
         assert expected_error.lower() in str(exc_info.value.detail).lower()
-        mock_db.get.assert_not_called()  # Powinno failować przed zapytaniem do bazy
+        mock_db.get.assert_not_called()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -153,7 +153,6 @@ class TestGetSwiftCodeEndpoint:
 
         with pytest.raises(HTTPException) as exc_info:
             await get_swift_code("NONEXISTABC", mock_db)
-
 
         assert exc_info.value.status_code == 404
         assert "not found" in str(exc_info.value.detail).lower()

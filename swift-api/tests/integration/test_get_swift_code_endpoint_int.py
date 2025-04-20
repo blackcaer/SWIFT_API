@@ -104,7 +104,7 @@ def test_get_nonexistent_swift_code(client: TestClient):
     response = client.get("/v1/swift-codes/NONEXISTABC")
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
-    
+
     response = client.get("/v1/swift-codes/NONEXISTXXX")
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
@@ -123,7 +123,7 @@ def test_get_nonexistent_swift_code(client: TestClient):
 def test_invalid_swift_code_format(client: TestClient, invalid_code, expected_error):
     """Test various invalid swift code formats"""
     response = client.get(f"/v1/swift-codes/{invalid_code}")
-    assert response.status_code == 400
+    assert response.status_code == 422  # Changed from 400 to 422
     assert expected_error.lower() in response.json()["detail"].lower()
 
 

@@ -119,7 +119,7 @@ def test_get_country_swift_codes_not_found(client: TestClient):
 def test_invalid_country_codes(client: TestClient, invalid_code, expected_error):
     """Test various invalid country code formats"""
     response = client.get(f"/v1/swift-codes/country/{invalid_code}")
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert expected_error.lower() in response.json()["detail"].lower()
 
 

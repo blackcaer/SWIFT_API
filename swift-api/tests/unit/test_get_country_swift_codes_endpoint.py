@@ -90,7 +90,7 @@ class TestGetCountrySwiftCodesEndpoint:
         with pytest.raises(HTTPException) as exc_info:
             await get_country_swift_codes(invalid_code, mock_db)
 
-        assert exc_info.value.status_code == 400
+        assert exc_info.value.status_code == 422  # Zmieniono z 400 na 422
         assert expected_error.lower() in str(exc_info.value.detail).lower()
         mock_db.exec.assert_not_called()
 
