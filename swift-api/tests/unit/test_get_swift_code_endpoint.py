@@ -174,3 +174,86 @@ class TestGetSwiftCodeEndpoint:
 
         await get_swift_code("  citius33xxx  ", mock_db)
         mock_validate.assert_called_with("  citius33xxx  ")
+
+
+class TestResponseStructures:
+    """Tests for verifying exact response structures according to requirements"""
+
+    @pytest.fixture
+    def mock_db(self):
+        mock = MagicMock()
+        mock.get = MagicMock(return_value=None)
+        mock_exec_result = MagicMock()
+        mock_exec_result.all.return_value = []
+        mock.exec = MagicMock(return_value=mock_exec_result)
+        return mock
+
+    @pytest.mark.asyncio
+    async def test_headquarter_response_structure(self, mock_db):
+        """Verify HQ response contains exactly the required fields"""
+        hq_data = SwiftCode(
+            swiftCode="CITIUS33XXX",
+            bankName="Citibank",
+            address="New York",
+            countryISO2="US",
+            countryName="USA",
+            isHeadquarter=True,
+        )
+        branch_data = [
+            SwiftCode(
+                swiftCode="CITIUS33MIA",
+                bankName="Citibank Miami",
+                address="Miami",
+                countryISO2="US",
+                isHeadquarter=False,
+            )
+        ]
+
+        mock_db.get.return_value = hq_data
+        mock_db.exec.return_value.all.return_value = branch_data
+
+        response = await get_swift_code("CITIUS33XXX", mock_db)
+
+        # Verify HQ response has exactly these fields
+        assert set(response.model_dump().keys()) == {
+            "address",
+            "bankName",
+            "countryISO2",
+            "countryName",
+            "isHeadquarter",
+            "swiftCode",
+            "branches",
+        }
+
+        # Verify each branch has exactly these fields (no countryName)
+        assert all(
+            set(branch.model_dump().keys())  # Use model_dump() to get the dictionary representation
+            == {"address", "bankName", "countryISO2", "isHeadquarter", "swiftCode"}
+            for branch in response.branches
+        )
+
+    @pytest.mark.asyncio
+    async def test_branch_response_structure(self, mock_db):
+        """Verify branch response contains exactly the required fields"""
+        branch_data = SwiftCode(
+            swiftCode="CITIUS33MIA",
+            bankName="Citibank Miami",
+            address="Miami",
+            countryISO2="US",
+            countryName="USA",
+            isHeadquarter=False,
+        )
+
+        mock_db.get.return_value = branch_data
+
+        response = await get_swift_code("CITIUS33MIA", mock_db)
+
+        # Verify branch response has exactly these fields (no branches field)
+        assert set(response.model_dump().keys()) == {
+            "address",
+            "bankName",
+            "countryISO2",
+            "countryName",
+            "isHeadquarter",
+            "swiftCode",
+        }

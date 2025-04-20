@@ -226,3 +226,53 @@ class TestGetCountrySwiftCodesEndpoint:
         # Verify only US codes returned
         assert all(code.countryISO2 == "US" for code in response.swiftCodes)
         assert len(response.swiftCodes) == 3
+
+
+class TestCountryResponseStructures:
+    """Tests for verifying country endpoint response structures"""
+
+    @pytest.fixture
+    def mock_db(self):
+        mock = MagicMock()
+        mock_exec_result = MagicMock()
+        mock_exec_result.all.return_value = []
+        mock.exec = MagicMock(return_value=mock_exec_result)
+        return mock
+
+    @pytest.mark.asyncio
+    async def test_country_response_structure(self, mock_db):
+        """Verify country response contains exactly the required fields"""
+        mock_codes = [
+            SwiftCode(
+                swiftCode="CITIUS33XXX",
+                bankName="Citibank",
+                address="New York",
+                countryISO2="US",
+                countryName="UNITED STATES",
+                isHeadquarter=True,
+            ),
+            SwiftCode(
+                swiftCode="CITIUS33MIA",
+                bankName="Citibank Miami",
+                address="Miami",
+                countryISO2="US",
+                isHeadquarter=False,
+            ),
+        ]
+
+        mock_db.exec.return_value.all.return_value = mock_codes
+
+        response = await get_country_swift_codes("US", mock_db)
+
+        # Verify top-level response structure
+        assert set(response.model_dump().keys()) == {"countryISO2", "countryName", "swiftCodes"}
+
+        # Verify each SWIFT code entry has exactly these fields
+        assert all(
+            set(code.model_dump().keys())
+            == {"address", "bankName", "countryISO2", "isHeadquarter", "swiftCode"}
+            for code in response.swiftCodes
+        )
+
+        # Verify countryName is not present in individual SWIFT code entries
+        assert all("countryName" not in code for code in response.swiftCodes)
