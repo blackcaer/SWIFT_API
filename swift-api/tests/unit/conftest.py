@@ -7,7 +7,7 @@ from app.main import app
 from app.database import get_session
 
 
-@pytest.fixture(name="session")
+@pytest.fixture(name="function")
 def session_fixture():
     engine = create_engine(
         "sqlite://", 

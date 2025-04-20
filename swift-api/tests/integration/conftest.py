@@ -6,7 +6,16 @@ from sqlmodel.pool import StaticPool
 from app.main import app
 from app.database import get_session
 
-@pytest.fixture(scope="module", autouse=True)
+import pytest
+from fastapi.testclient import TestClient
+from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel.pool import StaticPool
+
+from app.main import app
+from app.database import get_session
+
+
+@pytest.fixture(scope="function", autouse=True)
 def setup_db():
     engine = create_engine(
         "sqlite:///:memory:",
