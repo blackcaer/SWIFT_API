@@ -11,8 +11,6 @@ from app.schemas import (
 )
 from app.database import SessionDep
 from app.validators import (
-    CountryISO2CodeValidationError,
-    SwiftCodeValidationError,
     validate_countryISO2code_format,
     validate_swift_code_format,
 )
@@ -93,7 +91,7 @@ async def get_country_swift_codes(countryISO2code: str, db: SessionDep):
 
 
 @router.post("/", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-async def create_swift_code(swiftCode: SwiftCodeCreate, db: SessionDep):   
+async def create_swift_code(swiftCode: SwiftCodeCreate, db: SessionDep):
     # Schema automatically validates the SWIFT code format
     logger.info(f"Received request to create SWIFT code: {swiftCode.swiftCode}")
 
@@ -115,9 +113,7 @@ async def create_swift_code(swiftCode: SwiftCodeCreate, db: SessionDep):
                 detail="Corresponding headquarter not found. Add headquarter first",
             )
         else:
-            logger.info(
-                f"Headquarter SWIFT code {hq_code} exists for branch {swiftCode.swiftCode}"
-            )
+            logger.info(f"Headquarter SWIFT code {hq_code} exists for branch {swiftCode.swiftCode}")
 
     try:
         logger.info(f"Creating new SWIFT code: {swiftCode.swiftCode}")
@@ -131,4 +127,54 @@ async def create_swift_code(swiftCode: SwiftCodeCreate, db: SessionDep):
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database operation failed"
+        )
+
+
+@router.delete("/{swift_code}", response_model=MessageResponse)
+async def delete_swift_code(swift_code: str, db: SessionDep):
+    """
+    Deletes a SWIFT code entry from database.
+
+    - Checks SWIFT code format
+    - Verifies if code exists
+    - For HQ codes: Ensures no dependent branches exist
+    """
+
+    swift_code = validate_with_logging(validate_swift_code_format, swift_code, "SWIFT code")
+
+    db_code = db.get(SwiftCode, swift_code)
+    if not db_code:
+        logger.warning(f"SWIFT code not found: {swift_code}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="SWIFT code not found"
+        )
+
+    # Check for headquarter branches
+    if db_code.isHeadquarter:
+        branches_exist = db.exec(
+            select(SwiftCode).where(
+                SwiftCode.swiftCode.startswith(swift_code[:8]),
+                SwiftCode.swiftCode != swift_code,
+            )
+        ).first()  # Temporary query to check branches TODO 
+
+        if branches_exist:
+            logger.error(f"Cannot delete headquarters with existing branches ({swift_code})")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot delete headquarters with existing branches",
+            )
+    try:
+        db.delete(db_code)
+        db.commit()
+
+        logger.info(f"Deleted SWIFT code: {swift_code}")
+        return MessageResponse(message=f"SWIFT code {swift_code} deleted successfully")
+
+    except Exception as e:
+        logger.exception(f"Deletion failed for {swift_code}: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Deletion failed due to unexpected error: {e}",
         )

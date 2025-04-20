@@ -1,28 +1,54 @@
-# import pytest
-# from unittest.mock import MagicMock, patch
-# from app.routers.swift_codes import router
-# from fastapi import HTTPException
-# from fastapi.testclient import TestClient
-# from app.main import app
+import pytest
+from unittest.mock import MagicMock, patch
+from fastapi import HTTPException, status
+from sqlmodel import Session
+from app.models import SwiftCode
+from app.routers.swift_codes import delete_swift_code
+from app.schemas import MessageResponse
 
-# class TestDeleteResponseStructure:
-#     """Tests for verifying delete endpoint response structure"""
-    
-#     @pytest.fixture
-#     def client(self):
-#         return TestClient(app)
+class TestDeleteSwiftCodeUnit:
+    @pytest.fixture
+    def mock_db(self):
+        return MagicMock(spec=Session)
 
-#     @pytest.mark.asyncio
-#     @patch("app.routers.swift_codes.db.get")
-#     @patch("app.routers.swift_codes.db.delete")
-#     @patch("app.routers.swift_codes.db.commit")
-#     async def test_delete_response_structure(self, mock_commit, mock_delete, mock_get, client):
-#         """Verify delete response contains exactly the required fields"""
-#         # Mock existing code
-#         mock_get.return_value = MagicMock(swiftCode="DELETECODE")
+    async def test_successful_branch_deletion(self, mock_db):
+        mock_branch = SwiftCode(
+            swiftCode="CITIPLPP123",
+            bankName="CITIBANK POLAND",
+            countryISO2="PL",
+            countryName="POLAND",
+            address="UL. TESTOWA 123, WARSAW",
+            isHeadquarter=False
+        )
+        mock_db.get.return_value = mock_branch
+        mock_db.exec.return_value.first.return_value = None
 
-#         response = client.delete("/v1/swift-codes/DELETECODE")
+        response = await delete_swift_code("CITIPLPP123", mock_db)
 
-#         # Verify response has exactly these fields
-#         assert response.status_code == 200
-#         assert set(response.json().keys()) == {"message"}
+        assert response == MessageResponse(
+            message="SWIFT code CITIPLPP123 deleted successfully"
+        )
+        mock_db.delete.assert_called_once_with(mock_branch)
+
+    async def test_successful_hq_deletion(self, mock_db):
+        mock_hq = SwiftCode(
+            swiftCode="CITIPLPPXXX",
+            bankName="CITIBANK POLAND HQ",
+            isHeadquarter=True
+        )
+        mock_db.get.return_value = mock_hq
+        mock_db.exec.return_value.first.return_value = None
+
+        response = await delete_swift_code("CITIPLPPXXX", mock_db)
+
+        assert "CITIPLPPXXX" in response.message
+
+class TestDeleteResponseStructures:
+    def test_success_response_structure(self):
+        response = MessageResponse(
+            message="SWIFT code CITIPLPP123 deleted successfully"
+        )
+        
+        assert response.model_dump() == {
+            "message": "SWIFT code CITIPLPP123 deleted successfully"
+        }
