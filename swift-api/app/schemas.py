@@ -33,6 +33,11 @@ class SwiftCodeCreate(BaseModel):
         except SwiftCodeValidationError as e:
             raise ValueError(str(e))
 
+    @field_validator("address")
+    @classmethod
+    def validate_address(cls, v: str) -> str:
+        return validate_address(v)
+
     @field_validator("countryISO2")
     @classmethod
     def validate_country_code(cls, v: str) -> str:
