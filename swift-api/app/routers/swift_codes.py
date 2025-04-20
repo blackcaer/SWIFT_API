@@ -20,6 +20,7 @@ from app.logger import logger
 from fastapi import status
 from app.schemas import SwiftCodeCreate, SwiftCodeCreateResponse
 from app.models import SwiftCode
+from app.utils import validate_with_logging
 
 router = APIRouter(prefix="/v1/swift-codes")
 
@@ -29,18 +30,10 @@ router = APIRouter(prefix="/v1/swift-codes")
     response_model=Union[HeadquarterSwiftCodeResponse, BranchSwiftCodeResponse],
 )
 async def get_swift_code(swiftCode: str, db: SessionDep):
-    try:
-        swiftCode = validate_swift_code_format(swiftCode)
-    except SwiftCodeValidationError as e:
-        logger.error(f"Validation error for SWIFT code {swiftCode}: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.exception(f"Unexpected error during swift_code validation: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+    swiftCode = validate_with_logging(validate_swift_code_format, swiftCode, "SWIFT code")
     logger.info(f"SWIFT code: {swiftCode} is valid")
 
     db_code = db.get(SwiftCode, swiftCode)
-
     if not db_code:
         logger.warning(f"SWIFT code not found: {swiftCode}")
         raise HTTPException(status_code=404, detail="SWIFT code not found")
@@ -71,15 +64,10 @@ async def get_swift_code(swiftCode: str, db: SessionDep):
     response_model=CountrySwiftCodesResponse,
 )
 async def get_country_swift_codes(countryISO2code: str, db: SessionDep):
-    try:
-        countryISO2code = validate_countryISO2code_format(countryISO2code)
-    except CountryISO2CodeValidationError as e:
-        logger.error(f"Validation error for country code {countryISO2code}: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.exception(f"Unexpected error during countryISO2code alidation: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-    logger.info(f"Country code: {countryISO2code} is valid")
+
+    countryISO2code = validate_with_logging(
+        validate_countryISO2code_format, countryISO2code, "countryISO2code"
+    )
 
     db_codes = db.exec(select(SwiftCode).where(SwiftCode.countryISO2 == countryISO2code)).all()
 
@@ -105,9 +93,9 @@ async def get_country_swift_codes(countryISO2code: str, db: SessionDep):
 
 
 @router.post("/", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-async def create_swift_code(swift_code: SwiftCodeCreate, db: SessionDep):
+async def create_swift_code(swift_code: SwiftCodeCreate, db: SessionDep):   
+    # Schema automatically validates the SWIFT code format
     logger.info(f"Received request to create SWIFT code: {swift_code.swiftCode}")
-    logger.info(f"Received request to create SWIFT code: {swift_code}")
 
     if db.get(SwiftCode, swift_code.swiftCode):
         logger.warning(f"SWIFT code {swift_code.swiftCode} already exists in the database")
