@@ -1,0 +1,37 @@
+
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=swiftdb
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./swift-api/app/data:/app/app/data  
+      - ./swift-api/tests:/app/tests       
+      - ./swift-api/pytest.ini:/app/pytest.ini  
+
+  db:
+    image: postgres:13
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: swiftdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
