@@ -9,7 +9,7 @@
 
 A REST API for managing bank SWIFT/BIC (Bank Identifier Code) codes with comprehensive data processing, storage, and retrieval capabilities. The system processes SWIFT codes from Excel file, maintains headquarters-branch relationships, and provides fast, low-latency access through RESTful endpoints.
 
-## 🎯 Key Features
+## Key Features
 
 ### 1. SWIFT Data Processing
 - Excel file parsing with sophisticated data handling:
@@ -50,7 +50,7 @@ A REST API for managing bank SWIFT/BIC (Bank Identifier Code) codes with compreh
 - Docker and Docker Compose installed
 - Git for cloning the repository
 
-### Installation Steps
+### How to run
 1. Clone the repository:
    ```bash
    git clone [repository-url]
@@ -69,6 +69,10 @@ A REST API for managing bank SWIFT/BIC (Bank Identifier Code) codes with compreh
    - Default source: `data/Interns_2025_SWIFT_CODES.xlsx`
    - Optional: Use --file argument for custom source
 
+4. Check API documentation:
+    - Swagger UI: http://localhost:8080/docs
+    - ReDoc: http://localhost:8080/redoc
+
 ### Testing
 1. Run the test suite:
    ```bash
@@ -80,16 +84,13 @@ A REST API for managing bank SWIFT/BIC (Bank Identifier Code) codes with compreh
    docker-compose exec web pytest --cov=/app/app /app/tests/
    ```
 
-### API Documentation
-- Swagger UI: http://localhost:8080/docs
-- ReDoc: http://localhost:8080/redoc
-
 ### Container Management
 - Stop containers: `docker-compose stop`
 - Start containers: `docker-compose start`
 - Remove containers and volumes: `docker-compose down -v`
 
-## 🔍 Implementation Details
+
+## Implementation Details
 
 Some of the implementation details were not explicitly specified, so I listed my assumption here:
 
