@@ -9,40 +9,8 @@
 
 A REST API for managing bank SWIFT/BIC (Bank Identifier Code) codes with comprehensive data processing, storage, and retrieval capabilities. The system processes SWIFT codes from Excel file, maintains headquarters-branch relationships, and provides fast, low-latency access through RESTful endpoints.
 
-## Key Features
 
-### 1. SWIFT Data Processing
-- Excel file parsing with sophisticated data handling:
-  - Automatic HQ detection (codes ending with "XXX")
-  - Branch-HQ relationship mapping (first 8 characters matching)
-  - Data standardization (uppercase country names and codes)
-  - Redundant column filtering
-  - Strict 11-character SWIFT code validation
-
-### 2. Data Storage
-- PostgreSQL database implementation for:
-  - Fast, low-latency querying
-  - Efficient data retrieval by SWIFT code and country
-  - Robust relationship management between HQs and branches
-  - Data integrity enforcement
-
-### 3. REST API Endpoints
-- **GET /v1/swift-codes/{swift-code}**
-  - Retrieve detailed information for any SWIFT code
-  - Different response structures for HQ (includes branches) and branch codes
-  
-- **GET /v1/swift-codes/country/{countryISO2code}**
-  - Get all SWIFT codes for a specific country
-  - Returns both HQs and branches with complete details
-  
-- **POST /v1/swift-codes**
-  - Add new SWIFT code entries
-  - Validates HQ-branch relationships
-  - Ensures data integrity
-  
-- **DELETE /v1/swift-codes/{swift-code}**
-  - Remove SWIFT codes from the database
-  - Proper error handling for non-existent codes
+[**Full task description**](./task/Home%20Exercise%202025%20for%20interns.docx.pdf)
 
 ## 💻 Setup and Running
 
@@ -90,7 +58,43 @@ A REST API for managing bank SWIFT/BIC (Bank Identifier Code) codes with compreh
 - Remove containers and volumes: `docker-compose down -v`
 
 
-## Implementation Details
+## 🚀 Key Features
+
+### SWIFT Data Processing
+- Excel file parsing with sophisticated data handling:
+  - Automatic HQ detection (codes ending with "XXX")
+  - Branch-HQ relationship mapping (first 8 characters matching)
+  - Data standardization (uppercase country names and codes)
+  - Redundant column filtering
+  - Strict 11-character SWIFT code validation
+
+### Data Storage
+- PostgreSQL database implementation for:
+  - Fast, low-latency querying
+  - Efficient data retrieval by SWIFT code and country
+  - Robust relationship management between HQs and branches
+  - Data integrity enforcement
+
+### REST API Endpoints
+- **GET /v1/swift-codes/{swift-code}**
+  - Retrieve detailed information for any SWIFT code
+  - Different response structures for HQ (includes branches) and branch codes
+  
+- **GET /v1/swift-codes/country/{countryISO2code}**
+  - Get all SWIFT codes for a specific country
+  - Returns both HQs and branches with complete details
+  
+- **POST /v1/swift-codes**
+  - Add new SWIFT code entries
+  - Validates HQ-branch relationships
+  - Ensures data integrity
+  
+- **DELETE /v1/swift-codes/{swift-code}**
+  - Remove SWIFT codes from the database
+  - Proper error handling for non-existent codes
+
+
+## 📌 Implementation Details
 
 Some of the implementation details were not explicitly specified, so I listed my assumption here:
 
